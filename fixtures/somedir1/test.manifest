@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "error.simpletest.js",
+      "command": "node",
+      "parameters": ["error.simpletest.js"]
+    },
+    {
+      "name": "ok.simpletest.js",
+      "command": "node",
+      "parameters": ["ok.simpletest.js"]
+    },
+    {
+      "name": "somedir2/ok.simpletest.js",
+      "command": "node",
+      "parameters": ["somedir2/ok.simpletest.js"]
+    }
+  ]
+}

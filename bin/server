@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+
+var options = require('minimist')(process.argv.slice(2));
+
+var server = require('../js/server.js')(options.path || '.', options.key);
+
+server.listen(options.port || 80);
