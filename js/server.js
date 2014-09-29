@@ -44,9 +44,9 @@ var Constructor = function(path, uploadKey) {
                   var child = spawn(test.command, test.parameters, { cwd: workDir });
                   var output = '';
                   if(child) {
-                    child.stdout.on('data', function(data) { output += data });
-                    child.stderr.on('data', function(data) { output += data });
-                    child.on('close', function(exitCode) { callback(exitCode, output) });
+                    child.stdout.on('data', function(data) { output += data; });
+                    child.stderr.on('data', function(data) { output += data; });
+                    child.on('close', function(exitCode) { callback(exitCode, output); });
                   } else {
                     callback(1, 'No available extension for this test.');
                   }
@@ -68,15 +68,15 @@ var Constructor = function(path, uploadKey) {
   
   var app = express();
   app.use(mount, function(req, res, next) {
-    if(req.method == 'GET') {
-      if(req.url == '/') {
+    if(req.method === 'GET') {
+      if(req.url === '/') {
         res.set('Content-Type', 'application/json');
         res.status(200).send(JSON.stringify(tests.index, null, '  '));
       } else {
         var test = tests.config[req.url];
         if(test) {
           var data = test.run(function(exitCode, output) {
-            res.status(exitCode == 0 ? 200 : 525); // Custom error code for a failed test
+            res.status(exitCode === 0 ? 200 : 525); // Custom error code for a failed test
             res.set('Content-Type', 'text/plain');
             res.send(output);
           });
@@ -84,10 +84,10 @@ var Constructor = function(path, uploadKey) {
           next();
         }
       }
-    } else if(req.method == 'POST') {
+    } else if(req.method === 'POST') {
       
       if(uploadKey) {
-        if(req.param('key') != uploadKey) {
+        if(req.param('key') !== uploadKey) {
           res.status(401).send("Wrong upload key provided\r\n");
           return;
         }
@@ -104,7 +104,9 @@ var Constructor = function(path, uploadKey) {
       var dest = join(path, url);
       ensureDir(dest, function(err) {
         if(!err) {
-          req.pipe(unzip.Parse()).on('entry', function(entry) { console.log(entry.path) }).pipe(fstream.Writer({path: dest}));
+          req.pipe(unzip.Parse())
+            .on('entry', function(entry) { console.log(entry.path); })
+            .pipe(fstream.Writer({path: dest}));
           res.status(200).send("Fileset uploaded\r\n");
           tests.updateConfig();
         } else {

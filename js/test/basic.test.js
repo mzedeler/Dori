@@ -1,4 +1,6 @@
 'use strict';
+/* global describe, it */
+
 var assert = require('chai').assert;
 var request = require('supertest');
 
@@ -7,7 +9,7 @@ var Server = require('../server.js');
 describe('Initialization', function() {
   it('Should be possible to initialize Server', function(done) {
     assert.isFunction(Server, 'Require Server returns a function');
-    var server = Server();
+    var server = new Server();
     assert.isFunction(server, 'Call to Server constructor returns function.');
     done();
   });

@@ -1,4 +1,4 @@
-#node
+'use strict';
 
 console.log(__filename);
 console.log('writing to stdout');
