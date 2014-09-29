@@ -1,21 +1,21 @@
 'use strict';
 
-var glob = require('glob');
-var express = require('express');
-var sprintf = require('sprintf').sprintf;
-var spawn = require('child_process').spawn;
-var dirname = require('path').dirname;
-var normalize = require('path').normalize;
-var join = require('path').join;
-var fs = require('fs');
-var unzip = require('unzip');
-var fstream = require('fstream');
-var ensureDir = require('fs-extra').ensureDir;
+var glob = require('glob'),
+    express = require('express'),
+    sprintf = require('sprintf').sprintf,
+    spawn = require('child_process').spawn,
+    dirname = require('path').dirname,
+    normalize = require('path').normalize,
+    join = require('path').join,
+    fs = require('fs'),
+    unzip = require('unzip'),
+    fstream = require('fstream'),
+    ensureDir = require('fs-extra').ensureDir;
 
 var Constructor = function(path, uploadKey) {
 
   if(!uploadKey) {
-    console.warn('No uploadKey provided. This makes it possible for anybody to upload tests!');
+    console.warn('No uploadKey provided. Uploading tests will be disabled.');
   }
   
   var mount = '/tests';
@@ -71,12 +71,12 @@ var Constructor = function(path, uploadKey) {
     if(req.method == 'GET') {
       if(req.url == '/') {
         res.set('Content-Type', 'application/json');
-        res.send(JSON.stringify(tests.index, null, '  '));
+        res.status(200).send(JSON.stringify(tests.index, null, '  '));
       } else {
         var test = tests.config[req.url];
         if(test) {
           var data = test.run(function(exitCode, output) {
-            res.statusCode = exitCode == 0 ? 200 : 525; // Custom error code for a failed test
+            res.status(exitCode == 0 ? 200 : 525); // Custom error code for a failed test
             res.set('Content-Type', 'text/plain');
             res.send(output);
           });
@@ -88,9 +88,12 @@ var Constructor = function(path, uploadKey) {
       
       if(uploadKey) {
         if(req.param('key') != uploadKey) {
-          res.send(401, "Wrong upload key provided\r\n");
+          res.status(401).send("Wrong upload key provided\r\n");
           return;
         }
+      } else {
+        res.status(401).send("Uploading disabled\r\n");
+        return;
       }
       
       var url = normalize(req.url);
@@ -102,10 +105,10 @@ var Constructor = function(path, uploadKey) {
       ensureDir(dest, function(err) {
         if(!err) {
           req.pipe(unzip.Parse()).on('entry', function(entry) { console.log(entry.path) }).pipe(fstream.Writer({path: dest}));
-          res.send(200, "Fileset uploaded\r\n");
+          res.status(200).send("Fileset uploaded\r\n");
           tests.updateConfig();
         } else {
-          res.send(500, 'Unable to upload to ' + req.url + "\r\n");
+          res.status(500).send('Unable to upload to ' + req.url + "\r\n");
         }
       });
     }
