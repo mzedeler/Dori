@@ -4,4 +4,21 @@ var options = require('minimist')(process.argv.slice(2));
 
 var server = require('../js/server.js')(options.path || '.', options.key);
 
-server.listen(options.port || 80);
+if(!options.key) {
+  console.warn('No uploadKey provided. Uploading tests will be disabled.');
+}
+
+var port = options.port || 80;
+
+process.on('uncaughtException', function(err) {
+  if(err.errno === 'EACCES') {
+    console.warn('Unable to bind to port ' + port + ' - access denied.');
+    console.log('For different port, use --port or run with the necessary permissions.');
+  } else if(err.errno === 'EADDRINUSE') {
+    console.warn('Unable to bind to port ' + port + ' - already in use.');
+  } else {
+    throw(err);
+  }
+});
+
+server.listen(port);

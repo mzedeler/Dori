@@ -1,5 +1,7 @@
 'use strict';
 
+//TODO: Use https://www.npmjs.org/package/shelljs-nodecli
+
 var glob = require('glob'),
     express = require('express'),
     sprintf = require('sprintf').sprintf,
@@ -12,12 +14,8 @@ var glob = require('glob'),
     fstream = require('fstream'),
     ensureDir = require('fs-extra').ensureDir;
 
-var Constructor = function(path, uploadKey) {
+var Constructor = function(path, uploadKey, debug) {
 
-  if(!uploadKey) {
-    console.warn('No uploadKey provided. Uploading tests will be disabled.');
-  }
-  
   var mount = '/tests';
   var matches = normalize(path || '.').match('(.*)/?');
   path = matches[1];
@@ -25,7 +23,7 @@ var Constructor = function(path, uploadKey) {
   var tests = {
     config: {}
   };
-  tests.updateConfig = function() {
+  tests.updateConfig = function(callback) {
     var config = {}, index = {
       tests: {},
       errors: {}
@@ -39,7 +37,7 @@ var Constructor = function(path, uploadKey) {
             var workDir = dirname(manifestPath);
             manifest.tests.forEach(function(test) {
               if(test.command) {
-                index.tests[join(mount, baseUrl, test.name)] = {};
+                index.tests[mount.concat(baseUrl, '/', test.name)] = {};
                 test.run = function(callback) {
                   var child = spawn(test.command, test.parameters, { cwd: workDir });
                   var output = '';
@@ -48,11 +46,11 @@ var Constructor = function(path, uploadKey) {
                     child.stderr.on('data', function(data) { output += data; });
                     child.on('close', function(exitCode) { callback(exitCode, output); });
                   } else {
-                    callback(1, 'No available extension for this test.');
+                    callback(1, 'Spawning test failed.');
                   }
                   return;
                 };
-                config[join(baseUrl, test.name)] = test;
+                config[baseUrl.concat('/', test.name)] = test;
               }
             });
           }
@@ -60,8 +58,13 @@ var Constructor = function(path, uploadKey) {
           index.errors[manifestPath] = 'Unable to parse manifest: ' + e;
         }
       });
+    
     this.config = config;
     this.index = index;
+    
+    if(callback) {
+      callback();
+    }
   };
 
   tests.updateConfig();
@@ -96,19 +99,35 @@ var Constructor = function(path, uploadKey) {
         return;
       }
       
-      var url = normalize(req.url);
-      if(url.match(/\.\./) || url.match(/[^[:alnum:]\/]/)) {
+      var urlPath = normalize(req.path);
+      if(urlPath.match(/\.\./) || urlPath.match(/[^[:alnum:]\/]/)) {
         next();
       }
 
-      var dest = join(path, url);
+      var dest = join(path, urlPath);
       ensureDir(dest, function(err) {
         if(!err) {
-          req.pipe(unzip.Parse())
-            .on('entry', function(entry) { console.log(entry.path); })
-            .pipe(fstream.Writer({path: dest}));
-          res.status(200).send("Fileset uploaded\r\n");
-          tests.updateConfig();
+          if(debug) {
+            var uploadPath = '/tmp/test.zip';
+            console.log('Piping zip file that is being uploaded to ' + uploadPath);
+            req.pipe(fs.createWriteStream(uploadPath));
+          }
+          var unzipper = unzip.Extract({path: dest});
+          req.pipe(unzipper);
+          
+          var count = 0;
+          var checkComplete = function(where) {
+            count++;
+            if(count == 2) {
+              app.emit('dori:uploaded', dest);
+              res.status(200).send("Fileset uploaded\r\n");
+              tests.updateConfig(function() {
+                app.emit('dori:configUpdated');
+              });
+            }
+          };
+          unzipper.on('finish', function() {checkComplete('unzipper')});
+          req.on('end', function() {checkComplete('req')});
         } else {
           res.status(500).send('Unable to upload to ' + req.url + "\r\n");
         }

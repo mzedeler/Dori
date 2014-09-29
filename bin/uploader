@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+
+var options = require('minimist')(process.argv.slice(2));
+
+var uploader = require('../js/uploader.js');
+
+uploader(options.tests, options.url, options.key, function(error) {
+  if(error) {
+    throw(error);
+  }
+});

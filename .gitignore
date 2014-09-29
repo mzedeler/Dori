@@ -29,3 +29,5 @@ node_modules
 
 # Backup files written by joe and other editors 
 *~
+
+fixtures/tmp
