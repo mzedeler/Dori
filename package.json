@@ -1,6 +1,6 @@
 {
   "name": "Testhandler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Webserver that handles running various blackbox tests, exposing them through http.",
   "scripts": {
     "start": "node js/index.js",
