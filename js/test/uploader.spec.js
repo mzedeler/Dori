@@ -20,8 +20,6 @@ describe('Uploader', function() {
   
   describe('Uploading', function() {
   
-    // module.exports = function(path, serverUrl, key, callback) {
-    
     var serverRoot;
     before(function(done) {
       tmp.dir(
@@ -66,6 +64,7 @@ describe('Uploader', function() {
             done();
           });
       });
+      it('Returns status 500 if something that cant be unpacked is uploaded');
     });
   });
 

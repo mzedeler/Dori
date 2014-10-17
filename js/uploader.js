@@ -1,6 +1,6 @@
 'use strict';
 
-var archiver = require('archiver'),
+var tar = require('tar-fs'),
     http = require('http'),
     url = require('url'),
     glob = require('glob'),
@@ -31,19 +31,8 @@ module.exports = function(path, serverUrl, key, callback) {
             callback(error);
           });
         });
-        var archive = archiver('zip');
-        var output = fs.createWriteStream(tmpPath);
-        archive.pipe(output);
-        archive.bulk([{src: ['**/*'], dest: '.', expand: true, cwd: path}]);
-        output.on('finish', function() {
-          var input = fs.createReadStream(tmpPath);
-          input.pipe(req);
-          input.on('end', function() { 
-            req.end();
-            rm(tmpPath);
-          });
-        });
-        archive.finalize();
+        var archive = tar.pack(path);
+        archive.pipe(req);
       }
     }
   );

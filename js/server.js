@@ -10,8 +10,7 @@ var glob = require('glob'),
     normalize = require('path').normalize,
     join = require('path').join,
     fs = require('fs'),
-    unzip = require('unzip'),
-    fstream = require('fstream'),
+    tar = require('tar-fs'),
     ensureDir = require('fs-extra').ensureDir;
 
 var Constructor = function(path, uploadKey, debug) {
@@ -108,19 +107,21 @@ var Constructor = function(path, uploadKey, debug) {
       ensureDir(dest, function(err) {
         if(!err) {
           if(debug) {
-            var uploadPath = '/tmp/test.zip';
-            console.log('Piping zip file that is being uploaded to ' + uploadPath);
+            var uploadPath = '/tmp/test.tar';
             req.pipe(fs.createWriteStream(uploadPath));
           }
-          var unzipper = unzip.Extract({ path: dest });
-          unzipper.on('close', function() { 
+          var extract = tar.extract(dest);
+          extract.on('finish', function() {
             app.emit('dori:uploaded', dest);
             res.status(200).send("Fileset uploaded\r\n");
             tests.updateConfig(function() {
               app.emit('dori:configUpdated', tests);
             });
           });
-          req.pipe(unzipper);
+          extract.on('error', function(e) {
+            res.status(500).send('Error while extracting package');
+          });
+          req.pipe(extract);
         } else {
           res.status(500).send('Unable to upload to ' + req.url + "\r\n");
         }
