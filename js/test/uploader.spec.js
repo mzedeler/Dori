@@ -25,27 +25,24 @@ describe('Uploader', function() {
     var serverRoot;
     before(function(done) {
       tmp.dir(
-//        { unsafeCleanup: true },
+        { unsafeCleanup: true },
         function(err, path) {
           if(!err) {
             serverRoot = path;
             cp('-r', 'fixtures', serverRoot);
-            console.log(serverRoot);
           }
           done();
         }
       );
     });
     
+    after(function() { rm('-r', serverRoot); });
+    
     describe('Uploading tests', function() {
       it('Is possible to upload fixtures', function(done) {
-        var app = new Server(serverRoot, 'abc', true);
+        var app = new Server(serverRoot, 'abc');
         var server = app.listen(0, function() {
-          app.on('dori:configUpdated', function() {
-            console.log('config updated');
-            console.log(arguments);
-            done();
-          });
+          app.on('dori:configUpdated', function() { done(); });
           uploader(
             'fixtures/somedir1',
             'http://localhost:' + server.address().port + '/tests/tmp/',
@@ -57,12 +54,10 @@ describe('Uploader', function() {
         });
       });
       it('Lists the fixtures that were just uploaded', function(done) {
-        console.log('list!');
         var app = new Server(serverRoot);
         request(app)
           .get('/tests/')
           .end(function(err, res) {
-            console.log(res.body.tests);
             ['/tests/tmp/ok.simpletest.js',
              '/tests/tmp/error.simpletest.js',
              '/tests/tmp/somedir2/ok.simpletest.js'].forEach(function(url) {

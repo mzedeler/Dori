@@ -112,22 +112,15 @@ var Constructor = function(path, uploadKey, debug) {
             console.log('Piping zip file that is being uploaded to ' + uploadPath);
             req.pipe(fs.createWriteStream(uploadPath));
           }
-          var unzipper = unzip.Extract({path: dest});
+          var unzipper = unzip.Extract({ path: dest });
+          unzipper.on('close', function() { 
+            app.emit('dori:uploaded', dest);
+            res.status(200).send("Fileset uploaded\r\n");
+            tests.updateConfig(function() {
+              app.emit('dori:configUpdated', tests);
+            });
+          });
           req.pipe(unzipper);
-          
-          var count = 0;
-          var checkComplete = function(where) {
-            count++;
-            if(count === 2) {
-              app.emit('dori:uploaded', dest);
-              res.status(200).send("Fileset uploaded\r\n");
-              tests.updateConfig(function() {
-                app.emit('dori:configUpdated', tests);
-              });
-            }
-          };
-          unzipper.on('close', function() { checkComplete('unzipper'); });
-          req.on('end', function() { checkComplete('req'); });
         } else {
           res.status(500).send('Unable to upload to ' + req.url + "\r\n");
         }
