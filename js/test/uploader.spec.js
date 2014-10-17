@@ -27,7 +27,7 @@ describe('Uploader', function() {
           app.on('dori:configUpdated', function() {
             // XXX: Without this, the tests doesn't get uploaded.
             //      For some reason, this is only a problem in the test.
-            setTimeout(done, 1000)
+            setTimeout(done, 1000);
           });
           uploader(
             'fixtures/somedir1',

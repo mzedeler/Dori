@@ -118,7 +118,7 @@ var Constructor = function(path, uploadKey, debug) {
           var count = 0;
           var checkComplete = function(where) {
             count++;
-            if(count == 2) {
+            if(count === 2) {
               app.emit('dori:uploaded', dest);
               res.status(200).send("Fileset uploaded\r\n");
               tests.updateConfig(function() {
@@ -126,8 +126,8 @@ var Constructor = function(path, uploadKey, debug) {
               });
             }
           };
-          unzipper.on('finish', function() {checkComplete('unzipper')});
-          req.on('end', function() {checkComplete('req')});
+          unzipper.on('finish', function() { checkComplete('unzipper'); });
+          req.on('end', function() { checkComplete('req'); });
         } else {
           res.status(500).send('Unable to upload to ' + req.url + "\r\n");
         }
