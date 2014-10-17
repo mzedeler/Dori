@@ -1,11 +1,13 @@
 'use strict';
-/* global describe, it */
+/* global describe, it, before, after */
 
-var assert = require('chai').assert;
-var request = require('supertest');
-
-var Server = require('../server.js');
-var uploader = require('../uploader.js');
+var assert = require('chai').assert,
+    request = require('supertest'),
+    rm = require('shelljs').rm,
+    cp = require('shelljs').cp,
+    tmp = require('tmp'),
+    Server = require('../server.js'),
+    uploader = require('../uploader.js');
 
 describe('Uploader', function() {
   
@@ -20,14 +22,29 @@ describe('Uploader', function() {
   
     // module.exports = function(path, serverUrl, key, callback) {
     
+    var serverRoot;
+    before(function(done) {
+      tmp.dir(
+//        { unsafeCleanup: true },
+        function(err, path) {
+          if(!err) {
+            serverRoot = path;
+            cp('-r', 'fixtures', serverRoot);
+            console.log(serverRoot);
+          }
+          done();
+        }
+      );
+    });
+    
     describe('Uploading tests', function() {
       it('Is possible to upload fixtures', function(done) {
-        var app = new Server('fixtures', 'abc');
+        var app = new Server(serverRoot, 'abc', true);
         var server = app.listen(0, function() {
-          app.on('dori:configUpdated', function() {
-            // XXX: Without this, the tests doesn't get uploaded.
-            //      For some reason, this is only a problem in the test.
-            setTimeout(done, 1000);
+          app.on('dori:configUpdated', function() {
+            console.log('config updated');
+            console.log(arguments);
+            done();
           });
           uploader(
             'fixtures/somedir1',
@@ -40,10 +57,12 @@ describe('Uploader', function() {
         });
       });
       it('Lists the fixtures that were just uploaded', function(done) {
-        var app = new Server('fixtures');
+        console.log('list!');
+        var app = new Server(serverRoot);
         request(app)
           .get('/tests/')
           .end(function(err, res) {
+            console.log(res.body.tests);
             ['/tests/tmp/ok.simpletest.js',
              '/tests/tmp/error.simpletest.js',
              '/tests/tmp/somedir2/ok.simpletest.js'].forEach(function(url) {

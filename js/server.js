@@ -122,11 +122,11 @@ var Constructor = function(path, uploadKey, debug) {
               app.emit('dori:uploaded', dest);
               res.status(200).send("Fileset uploaded\r\n");
               tests.updateConfig(function() {
-                app.emit('dori:configUpdated');
+                app.emit('dori:configUpdated', tests);
               });
             }
           };
-          unzipper.on('finish', function() { checkComplete('unzipper'); });
+          unzipper.on('close', function() { checkComplete('unzipper'); });
           req.on('end', function() { checkComplete('req'); });
         } else {
           res.status(500).send('Unable to upload to ' + req.url + "\r\n");
