@@ -1,6 +1,7 @@
 'use strict';
 
 var tar = require('tar-fs'),
+    zlib = require('zlib'),
     http = require('http'),
     url = require('url'),
     glob = require('glob'),
@@ -26,5 +27,5 @@ module.exports = function(path, serverUrl, key, callback) {
       });
     });
     var archive = tar.pack(path);
-    archive.pipe(req);
+    archive.pipe(zlib.createGzip()).pipe(req);
 };

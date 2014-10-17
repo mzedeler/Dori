@@ -11,6 +11,7 @@ var glob = require('glob'),
     join = require('path').join,
     fs = require('fs'),
     tar = require('tar-fs'),
+    zlib = require('zlib'),
     ensureDir = require('fs-extra').ensureDir;
 
 var Constructor = function(path, uploadKey, debug) {
@@ -107,21 +108,24 @@ var Constructor = function(path, uploadKey, debug) {
       ensureDir(dest, function(err) {
         if(!err) {
           if(debug) {
-            var uploadPath = '/tmp/test.tar';
+            var uploadPath = '/tmp/test.tar.gz';
             req.pipe(fs.createWriteStream(uploadPath));
           }
-          var extract = tar.extract(dest);
-          extract.on('finish', function() {
+          var untar = tar.extract(dest);
+          untar.on('finish', function() {
             app.emit('dori:uploaded', dest);
             res.status(200).send("Fileset uploaded\r\n");
             tests.updateConfig(function() {
               app.emit('dori:configUpdated', tests);
             });
           });
-          extract.on('error', function(e) {
+          var extractError = function(e) {
             res.status(500).send('Error while extracting package');
-          });
-          req.pipe(extract);
+          };
+          untar.on('error', extractError);
+          var gunzip = zlib.createGunzip();
+          gunzip.on('error', extractError);
+          req.pipe(gunzip).pipe(untar);
         } else {
           res.status(500).send('Unable to upload to ' + req.url + "\r\n");
         }
