@@ -7,11 +7,10 @@ var request = require('supertest');
 var Server = require('../server.js');
 
 describe('Initialization', function() {
-  it('Should be possible to initialize Server', function(done) {
+  it('Should be possible to initialize Server', function() {
     assert.isFunction(Server, 'Require Server returns a function');
     var server = new Server();
     assert.isFunction(server, 'Call to Server constructor returns function.');
-    done();
   });
 });
 
@@ -71,6 +70,11 @@ describe('Serving', function() {
     });
 
   });
+
+  describe('Installing tests', function() {
+    it('Is possible to upload a test package');
+    it('Runs install script in test manifest');
+  });
   
   describe('Error handling', function() {
     it('Returns status 404 for non-existing tests', function(done) {
@@ -86,6 +90,8 @@ describe('Serving', function() {
         .expect(404, done);
     });
     it('Returns status 409 on the second run of an already running test');
+    it('Returns status 500 if an invalid test package is uploaded');
+    it('Returns status 500 if a test package with a test manifest that contains errors');
   });
   
 });

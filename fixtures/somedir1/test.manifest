@@ -1,4 +1,8 @@
 {
+  "install": {
+    "command": "node",
+    "parameters": "-p 'console.log(\"install ok\")'"
+  },
   "tests": [
     {
       "name": "error.simpletest.js",

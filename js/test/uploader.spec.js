@@ -64,7 +64,6 @@ describe('Uploader', function() {
             done();
           });
       });
-      it('Returns status 500 if something that cant be unpacked is uploaded');
     });
   });
 
