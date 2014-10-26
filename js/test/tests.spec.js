@@ -16,8 +16,8 @@ describe('Initialization', function() {
 });
 
 describe('Configuring and running tests', function() {
+  var tests = new Tests('fixtures', '/tests');
   it('Should be possible to add directory with tests', function() {
-    var tests = new Tests('fixtures', '/tests');
     ['/tests/somedir1/ok.simpletest.js',
      '/tests/somedir1/error.simpletest.js',
      '/tests/somedir1/somedir2/ok.simpletest.js'].forEach(function(url) {
@@ -25,5 +25,28 @@ describe('Configuring and running tests', function() {
      });
     assert.equal(Object.keys(tests.index().tests).length, 3, 'Just three test scripts');
   });
+
+  it('Should be possible to run an ok test', function(done) {
+    var ok_test = tests.get('/somedir1/ok.simpletest.js');
+    assert(ok_test, 'Ok test exists.');
+    assert.equal(ok_test.name, 'ok.simpletest.js', 'Ok test has right name.');
+    ok_test.run(function(exitCode, output) {
+      assert.equal(exitCode, 0, 'Ok test exited with exit code 0');
+      assert.match(output, /writing to stdout/, 'Ok test wrote to stdout');
+      assert.match(output, /writing to stderr/, 'Ok test wrote to stderr');
+      done();
+    });
+  });
+
+  it('Should be possible to run a failing test', function(done) {
+    var ok_test = tests.get('/somedir1/error.simpletest.js');
+    assert(ok_test, 'Failing test exists.');
+    assert.equal(ok_test.name, 'error.simpletest.js', 'Failing test has right name.');
+    ok_test.run(function(exitCode, output) {
+      assert.notEqual(exitCode, 0, 'Failing test exited with nonzero exit code');
+      done();
+    });
+  });
   
+  it('Should be possible to insert new test directories');
 });
