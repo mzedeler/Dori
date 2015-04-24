@@ -7,12 +7,9 @@ var express = require('express'),
     sprintf = require('sprintf').sprintf,
     normalize = require('path').normalize,
     join = require('path').join,
-    tar = require('tar-fs'),
-    zlib = require('zlib'),
-    ensureDir = require('fs-extra').ensureDir,
     Tests = require('./tests.js');
 
-var Constructor = function(path, uploadKey, debug) {
+var Constructor = function(path, uploadKey) {
 
   var mount = '/tests';
   var tests = new Tests(path, mount);
@@ -55,29 +52,12 @@ var Constructor = function(path, uploadKey, debug) {
       }
 
       var dest = join(path, urlPath);
-      ensureDir(dest, function(err) {
-        if(!err) {
-          if(debug) {
-            var uploadPath = '/tmp/test.tar.gz';
-            req.pipe(fs.createWriteStream(uploadPath));
-          }
-          var untar = tar.extract(dest);
-          untar.on('finish', function() {
-            app.emit('dori:uploaded', dest);
-            res.status(200).send("Fileset uploaded\r\n");
-            tests.updateConfig(function() {
-              app.emit('dori:configUpdated', tests);
-            });
-          });
-          var extractError = function(e) {
-            res.status(500).send('Error while extracting package');
-          };
-          untar.on('error', extractError);
-          var gunzip = zlib.createGunzip();
-          gunzip.on('error', extractError);
-          req.pipe(gunzip).pipe(untar);
+      tests.extract(dest, req, function(err) {
+        if(err) {
+          res.status(500).send('Error while processing request: ' + err);
         } else {
-          res.status(500).send('Unable to upload to ' + req.url + "\r\n");
+          res.status(200).send("Fileset uploaded\r\n");
+          app.emit('dori:configUpdated', tests);
         }
       });
     }
