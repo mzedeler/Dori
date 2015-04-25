@@ -3,7 +3,8 @@
 
 var assert = require('chai').assert;
 
-var Tests = require('../tests.js');
+var Tests = require('../tests.js'),
+    tmpTests = require('./tmp-classes.fixture.js').Tests;
 
 describe('Initialization', function() {
   it('Should be possible to initialize Tests', function() {
@@ -47,6 +48,18 @@ describe('Configuring and running tests', function() {
       done();
     });
   });
+
+  it('Runs the install command specified', function(done) {
+    var archive = require('../archive.js');
+
+    tmpTests('tests', function(tests) {
+      tests.extract('.', archive.pack('fixtures/somedir1/somedir2'), function(err, stdout) {
+        assert(!err, 'Reports error when rm fails' + err + ':' + stdout);
+        done();
+      });
+    });
+
+  });
   
   it('Handles errors when trying to remove directories gracefully', function(done) {
     var sinon = require('sinon'),
@@ -62,8 +75,8 @@ describe('Configuring and running tests', function() {
         return 'stub error';
       });
     });
-    tests.extract('somewhere', archive.pack('/tmp'), function(err) {
-      console.log(err);
+
+    tests.extract('somewhere', archive.pack('fixtures/somedir1/somedir2'), function(err) {
       assert(err, 'Reports error when rm fails');
       done();
     });

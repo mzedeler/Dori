@@ -6,57 +6,68 @@ var spawn = require('child_process').spawn,
     ensureDir = require('fs-extra').ensureDir,
     fs = require('fs'),
     shell = require('shelljs'),
+    join = require('path').join,
+    execFile = require('child_process').execFile,
+    exists = require('fs').exists,
     archive = require('./archive.js');
 
 var Constructor = function(path, mount) {
   this.path = path;
   this.mount = mount;
-  this.updateConfig();
-};
-
-Constructor.prototype.updateConfig = function(callback) {
-  var config = {};
-  var index = {
+  this._index = {
     tests: {},
     errors: {}
   };
+  this.config = {};
   var self = this;
   glob.sync(self.path + '/**/test.manifest')
     .forEach(function(manifestPath) {
-      try {
-        var manifest = JSON.parse(fs.readFileSync(manifestPath));
-        if(manifest.tests) {
-          var baseUrl = dirname(manifestPath).substr(self.path.length);
-          var workDir = dirname(manifestPath);
-          manifest.tests.forEach(function(test) {
-            if(test.command) {
-              index.tests[self.mount.concat(baseUrl, '/', test.name)] = {};
-              test.run = function(callback) {
-                var child = spawn(test.command, test.parameters, { cwd: workDir });
-                var output = '';
-                if(child) {
-                  child.stdout.on('data', function(data) { output += data; });
-                  child.stderr.on('data', function(data) { output += data; });
-                  child.on('close', function(exitCode) { callback(exitCode, output); });
-                } else {
-                  callback(1, 'Spawning test failed.');
-                }
-                return;
-              };
-              config[baseUrl.concat('/', test.name)] = test;
-            }
-          });
-        }
-      } catch(e) {
-        index.errors[manifestPath] = 'Unable to parse manifest: ' + e;
+      self.parseManifest(manifestPath);
+    });
+};
+
+Constructor.prototype.parseManifest = function(manifestPath, callback) {
+  var self = this;
+  var manifest;
+  if(!callback) {
+    callback = function() {};
+  }
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath));
+  } catch(e) {
+    self._index.errors[manifestPath] = 'Unable to parse manifest: ' + e;
+    callback('Unable to parse manifest: ' + e, '', '');
+    return;
+  }
+  if(manifest.tests) {
+    var baseUrl = dirname(manifestPath).substr(self.path.length);
+    var workDir = dirname(manifestPath);
+    manifest.tests.forEach(function(test) {
+      if(test.command) {
+        self._index.tests[self.mount.concat(baseUrl, '/', test.name)] = {};
+        test.run = function(callback) {
+          var child = spawn(test.command, test.parameters, { cwd: workDir });
+          var output = '';
+          if(child) {
+            child.stdout.on('data', function(data) { output += data; });
+            child.stderr.on('data', function(data) { output += data; });
+            child.on('close', function(exitCode) { callback(exitCode, output); });
+          } else {
+            callback(1, 'Spawning test failed.');
+          }
+          return;
+        };
+        self.config[baseUrl.concat('/', test.name)] = test;
       }
     });
-  
-  self.config = config;
-  self._index = index;
-  
-  if(callback) {
-    callback();
+  }
+  if(manifest.install) {
+    execFile(
+      manifest.install.command,
+      manifest.install.args,
+      {},
+      callback
+    );
   }
 };
 
@@ -67,7 +78,8 @@ Constructor.prototype.extract = function(dest, stream, callback) {
     cleanupStack.forEach(function(handler) {
       handler();
     });
-    tests.updateConfig(function() { callback(err); });
+    // TODO: Remove the tests anchored at dest
+    callback(err);
   }
   shell.rm('-rf', dest);
   var err = shell.error();
@@ -78,7 +90,13 @@ Constructor.prototype.extract = function(dest, stream, callback) {
         if(Constructor.debug) {
           stream.pipe(fs.createWriteStream('/tmp/test.tar.gz'));
         }
-        archive.unpack(stream, dest, callback);
+        archive.unpack(stream, dest, function(err) {
+          if(err) {
+            callback(err);
+          } else {
+            tests.parseManifest(join(dest, 'test.manifest'), callback);
+          }
+        });
       } else {
         errorHandler('Unable to create directory: ' + dest);
       }

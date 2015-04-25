@@ -35,9 +35,9 @@ module.exports = {
       callback(new Server(dir, uploadKey));
     });
   },
-  Tests: function(callback) {
+  Tests: function(mount, callback) {
     return tmpIfy(function(dir) {
-      callback(new Tests(dir));
+      callback(new Tests(mount, dir));
     });
   }
 };
