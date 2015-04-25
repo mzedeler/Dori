@@ -51,8 +51,7 @@ var Constructor = function(path, uploadKey) {
         next();
       }
 
-      var dest = join(path, urlPath);
-      tests.extract(dest, req, function(err) {
+      tests.extract(urlPath, req, function(err) {
         if(err) {
           res.status(500).send('Error while processing request: ' + err);
         } else {

@@ -1,7 +1,7 @@
 {
   "install": {
     "command": "node",
-    "parameters": "-p 'console.log(\"install ok\")'"
+    "args": ["-p", "console.log(\"install ok\")"]
   },
   "tests": [
     {
