@@ -37,7 +37,7 @@ module.exports = {
   },
   Tests: function(mount, callback) {
     return tmpIfy(function(dir) {
-      callback(new Tests(mount, dir));
+      callback(new Tests(dir, mount));
     });
   }
 };
