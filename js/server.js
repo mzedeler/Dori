@@ -57,8 +57,8 @@ var Constructor = function(path, uploadKey) {
           res.status(500).send('Error while processing request: ' + err);
         } else {
           res.status(200).send("Fileset uploaded\r\n");
-          app.emit('dori:configUpdated', tests);
         }
+        app.emit('dori:configUpdated', tests);
       });
     }
   });

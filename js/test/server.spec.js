@@ -5,6 +5,7 @@ var assert = require('chai').assert;
 var request = require('supertest');
 
 var Server = require('../server.js');
+var tmpServer = require('./tmp-server.fixture.js');
 
 describe('Initialization', function() {
   it('Should be possible to initialize Server', function() {
@@ -36,12 +37,15 @@ describe('Serving', function() {
       request(app)
         .get('/tests/')
         .end(function(err, res) {
-          ['/tests/somedir1/ok.simpletest.js',
-           '/tests/somedir1/error.simpletest.js',
-           '/tests/somedir1/somedir2/ok.simpletest.js'].forEach(function(url) {
-             assert(res.body.tests[url], 'The url ' + url + ' must be present in the test list');
-           });
-          assert.equal(Object.keys(res.body.tests).length, 3, 'Just three test scripts');
+          assert.sameMembers(
+            [
+              '/tests/somedir1/ok.simpletest.js',
+              '/tests/somedir1/error.simpletest.js',
+              '/tests/somedir1/somedir2/ok.simpletest.js'
+            ],
+            Object.keys(res.body.tests),
+            'Just three specific test scripts'
+          );
           done();
         });
     });
@@ -88,6 +92,33 @@ describe('Serving', function() {
       request(app)
         .get('/')
         .expect(404, done);
+    });
+    it('Handles errors when trying to remove directories gracefully', function(done) {
+      var sinon = require('sinon');
+      var shell = require('shelljs');
+      var uploader = require('../uploader.js');
+      sinon.stub(shell, 'rm', function() {
+        shell.rm.restore();
+        sinon.stub(shell, 'error', function() {
+          shell.error.restore();
+          return 'stub error';
+        });
+      });
+      tmpServer('abc', function(app) {
+        var server = app.listen(0, function() {
+          app.on('dori:configUpdated', function() {
+            done();
+          });
+          uploader(
+            'fixtures/somedir1',
+            'http://localhost:' + server.address().port + '/tests/tmp/',
+            'abc',
+            function(error) {
+               assert(error, 'Uploader aborts with error (got ' + error + ')');
+            }
+          );
+        });
+      });
     });
     it('Returns status 409 on the second run of an already running test');
     it('Returns status 500 if an invalid test package is uploaded');

@@ -6,7 +6,8 @@ var spawn = require('child_process').spawn,
     ensureDir = require('fs-extra').ensureDir,
     fs = require('fs'),
     tar = require('tar-fs'),
-    zlib = require('zlib');
+    zlib = require('zlib'),
+    shell = require('shelljs');
 
 var Constructor = function(path, mount) {
   this.path = path;
@@ -62,28 +63,42 @@ Constructor.prototype.updateConfig = function(callback) {
 
 Constructor.prototype.extract = function(dest, stream, callback) {
   var tests = this;
-  ensureDir(dest, function(err) {
-    if(!err) {
-      if(Constructor.debug) {
-        stream.pipe(fs.createWriteStream('/tmp/test.tar.gz'));
-      }
-      var untar = tar.extract(dest);
-      untar.on('finish', function() {
-        tests.updateConfig(function() {
-          callback();
+  var cleanupStack = [];
+  function errorHandler(err) {
+    cleanupStack.forEach(function(handler) {
+      handler();
+    });
+    tests.updateConfig(function() { callback(err); });
+  }
+  shell.rm('-rf', dest);
+  var err = shell.error();
+  if(!err) {
+    ensureDir(dest, function(err) {
+      if(!err) {
+        cleanupStack.push(function() { shell.rm('-rf', dest); });
+        if(Constructor.debug) {
+          stream.pipe(fs.createWriteStream('/tmp/test.tar.gz'));
+        }
+        var untar = tar.extract(dest);
+        untar.on('finish', function() {
+          tests.updateConfig(function() {
+            callback();
+          });
         });
-      });
-      var extractError = function(e) {
-        callback('Error while extracting package');
-      };
-      untar.on('error', extractError);
-      var gunzip = zlib.createGunzip();
-      gunzip.on('error', extractError);
-      stream.pipe(gunzip).pipe(untar);
-    } else {
-      callback('Unable to create directory: ' + dest);
-    }
-  });
+        var extractError = function(e) {
+          errorHandler('Error while extracting package');
+        };
+        untar.on('error', extractError);
+        var gunzip = zlib.createGunzip();
+        gunzip.on('error', extractError);
+        stream.pipe(gunzip).pipe(untar);
+      } else {
+        errorHandler('Unable to create directory: ' + dest);
+      }
+    });
+  } else {
+    errorHandler('Unable to remove directory: ' + dest + ' (' + err + ')');
+  }
 };
 
 Constructor.prototype.get = function(test) {
