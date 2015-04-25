@@ -1,13 +1,12 @@
 'use strict';
 
-var tar = require('tar-fs'),
-    zlib = require('zlib'),
-    http = require('http'),
+var http = require('http'),
     url = require('url'),
     glob = require('glob'),
     fs = require('fs'),
     querystring = require('querystring'),
-    rm = require('shelljs').rm;
+    rm = require('shelljs').rm,
+    archive = require('./archive.js');
 
 module.exports = function(path, serverUrl, key, callback) {
     var options = url.parse(serverUrl + '?' + querystring.stringify({key: key}));
@@ -26,6 +25,6 @@ module.exports = function(path, serverUrl, key, callback) {
         callback(error);
       });
     });
-    var archive = tar.pack(path);
-    archive.pipe(zlib.createGzip()).pipe(req);
+    archive.pack(path, req);
 };
+

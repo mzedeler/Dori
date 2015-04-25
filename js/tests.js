@@ -5,9 +5,8 @@ var spawn = require('child_process').spawn,
     glob = require('glob'),
     ensureDir = require('fs-extra').ensureDir,
     fs = require('fs'),
-    tar = require('tar-fs'),
-    zlib = require('zlib'),
-    shell = require('shelljs');
+    shell = require('shelljs'),
+    archive = require('./archive.js');
 
 var Constructor = function(path, mount) {
   this.path = path;
@@ -79,19 +78,7 @@ Constructor.prototype.extract = function(dest, stream, callback) {
         if(Constructor.debug) {
           stream.pipe(fs.createWriteStream('/tmp/test.tar.gz'));
         }
-        var untar = tar.extract(dest);
-        untar.on('finish', function() {
-          tests.updateConfig(function() {
-            callback();
-          });
-        });
-        var extractError = function(e) {
-          errorHandler('Error while extracting package');
-        };
-        untar.on('error', extractError);
-        var gunzip = zlib.createGunzip();
-        gunzip.on('error', extractError);
-        stream.pipe(gunzip).pipe(untar);
+        archive.unpack(stream, dest, callback);
       } else {
         errorHandler('Unable to create directory: ' + dest);
       }
