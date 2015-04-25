@@ -71,7 +71,12 @@ Constructor.prototype.parseManifest = function(manifestPath, callback) {
   }
 };
 
-Constructor.prototype.extract = function(dest, stream, callback) {
+Constructor.prototype.extract = function(relDest, stream, callback) {
+  var join = require('path').join;
+  var dest = join(this.path, relDest);
+  console.log(this.path);
+  console.log(relDest);
+  console.log(dest);
   var tests = this;
   var cleanupStack = [];
   function errorHandler(err) {
@@ -81,12 +86,14 @@ Constructor.prototype.extract = function(dest, stream, callback) {
     // TODO: Remove the tests anchored at dest
     callback(err);
   }
-  shell.rm('-rf', dest);
+  // shell.rm('-rf', dest);
+  console.log('rm -rf ' + dest);
   var err = shell.error();
   if(!err) {
     ensureDir(dest, function(err) {
       if(!err) {
-        cleanupStack.push(function() { shell.rm('-rf', dest); });
+        // cleanupStack.push(function() { shell.rm('-rf', dest); });
+  console.log('rm -rf ' + dest);
         if(Constructor.debug) {
           stream.pipe(fs.createWriteStream('/tmp/test.tar.gz'));
         }
