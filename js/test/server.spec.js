@@ -77,7 +77,6 @@ describe('Serving', function() {
 
   describe('Installing tests', function() {
     it('Is possible to upload a test package');
-    it('Runs install script in test manifest');
   });
   
   describe('Error handling', function() {
