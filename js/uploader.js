@@ -25,6 +25,6 @@ module.exports = function(path, serverUrl, key, callback) {
         callback(error);
       });
     });
-    archive.pack(path, req);
+    archive.pack(path).pipe(req);
 };
 

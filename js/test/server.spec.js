@@ -5,7 +5,7 @@ var assert = require('chai').assert;
 var request = require('supertest');
 
 var Server = require('../server.js');
-var tmpServer = require('./tmp-server.fixture.js');
+var tmpServer = require('./tmp-classes.fixture.js').Server;
 
 describe('Initialization', function() {
   it('Should be possible to initialize Server', function() {

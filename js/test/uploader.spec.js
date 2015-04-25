@@ -6,7 +6,7 @@ var assert = require('chai').assert,
     rm = require('shelljs').rm,
     cp = require('shelljs').cp,
     tmp = require('tmp'),
-    tmpServer = require('./tmp-server.fixture.js'),
+    tmpServer = require('./tmp-classes.fixture.js').Server,
     uploader = require('../uploader.js');
 
 describe('Uploader', function() {

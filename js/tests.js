@@ -97,3 +97,4 @@ Constructor.prototype.index = function() {
 };
 
 module.exports = Constructor;
+

@@ -48,10 +48,13 @@ describe('Configuring and running tests', function() {
     });
   });
   
-  it('Handles errors when trying to remove directories gracefully'/*, function(done) {
-    var sinon = require('sinon');
-    var shell = require('shelljs');
-    var uploader = require('../uploader.js');
+  it('Handles errors when trying to remove directories gracefully', function(done) {
+    var sinon = require('sinon'),
+        shell = require('shelljs'),
+        archive = require('../archive.js'),
+        stream = require('stream'),
+        tests = new Tests('fixtures', '/tests');
+
     sinon.stub(shell, 'rm', function() {
       shell.rm.restore();
       sinon.stub(shell, 'error', function() {
@@ -59,22 +62,13 @@ describe('Configuring and running tests', function() {
         return 'stub error';
       });
     });
-    tmpServer('abc', function(app) {
-      var server = app.listen(0, function() {
-        app.on('dori:configUpdated', function() {
-          done();
-        });
-        uploader(
-          'fixtures/somedir1',
-          'http://localhost:' + server.address().port + '/tests/tmp/',
-          'abc',
-          function(error) {
-             assert(error, 'Uploader aborts with error (got ' + error + ')');
-          }
-        );
-      });
+    tests.extract('somewhere', archive.pack('/tmp'), function(err) {
+      console.log(err);
+      assert(err, 'Reports error when rm fails');
+      done();
     });
-  }*/);
+  });
 
   it('Should be possible to insert new test directories');
 });
+

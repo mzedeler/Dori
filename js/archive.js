@@ -4,13 +4,15 @@ var tar = require('tar-fs'),
     zlib = require('zlib');
 
 module.exports = {
-  pack: function(src, stream) {
-    tar.pack(src).pipe(zlib.createGzip()).pipe(stream);
+  pack: function(src) {
+    return tar.pack(src).pipe(zlib.createGzip());
   },
   unpack: function(stream, dest, callback) {
     var untar = tar.extract(dest);
     var done = function(err) {
-      callback(err);
+      if(callback) {
+        callback(err);
+      }
       done = function() {};
     };
     function failed() {
