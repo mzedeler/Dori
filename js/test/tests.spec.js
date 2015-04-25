@@ -56,11 +56,24 @@ describe('Configuring and running tests', function() {
       tests.extract('.', archive.pack('fixtures/somedir1'), function(err, stdout, stderr) {
         assert.include(stdout, 'install ok', 'Stdout contains ok message');
         assert(!stderr, 'Stderr is empty');
-        assert(!err, 'No error code (or message)');
+        assert(!err, 'No error code (or message) provided');
         done();
       });
     });
 
+  });
+  
+  it('Handles errors returned by install command specified', function(done) {
+    var archive = require('../archive.js');
+
+    tmpTests('tests', function(tests) {
+      tests.extract('.', archive.pack('fixtures/somedir4'), function(err, stdout, stderr) {
+        assert.include(stdout, 'install not ok', 'Stdout contains error message');
+        assert(!stderr, 'Stderr is not empty');
+        assert(err, 'Error code (or message) provided: ' + err);
+        done();
+      });
+    });
   });
   
   it('Handles errors when trying to remove directories gracefully', function(done) {

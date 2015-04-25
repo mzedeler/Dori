@@ -1,0 +1,6 @@
+{
+  "install": {
+    "command": "node",
+    "args": ["-e", "console.log(\"install not ok\"); process.exit(-1);"]
+  }
+}
