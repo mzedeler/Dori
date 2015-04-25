@@ -31,7 +31,7 @@ Standard out and standard error is provided as information to the client, but do
 status of the test.
 
 When you've written your test, you need to upload it to Dori, which is done using a small upload script. The
-upload script uses, so you can upload from any place that can otherwise reach Dori. To let Dori know how to
+upload script uses http, so you can upload from any place that can otherwise reach Dori. To let Dori know how to
 run the test, you need to provide a file named `test.manifest`. This is a JSON file containing an object with
 the following keys:
 
