@@ -62,6 +62,7 @@ the following keys:
     }
 
 `my-suite/package.json`:
+
     {
       "name": "simple-test",
       "version": "1.0.0",
@@ -70,6 +71,7 @@ the following keys:
     }
 
 `my-suite/my.simple.test.js`:
+
     'use strict';
 
     console.log('Hello world. This test returns ok.');
