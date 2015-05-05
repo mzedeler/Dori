@@ -12,10 +12,14 @@ var express = require('express'),
 var Constructor = function(path, uploadKey) {
 
   var mount = '/tests';
+  if ( !path || path === '.' || path === './'  ) {
+    throw new Error( 'Invalid path: ' + path );
+  }
+
   var tests = new Tests(path, mount);
   var matches = normalize(path || '.').match('(.*)/?');
   path = matches[1];
-  
+
   var app = express();
   app.use(mount, function(req, res, next) {
     if(req.method === 'GET') {
@@ -35,7 +39,7 @@ var Constructor = function(path, uploadKey) {
         }
       }
     } else if(req.method === 'POST') {
-      
+
       if(uploadKey) {
         if(req.param('key') !== uploadKey) {
           res.status(401).send("Wrong upload key provided\r\n");

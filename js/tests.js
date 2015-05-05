@@ -83,6 +83,10 @@ Constructor.prototype.extract = function(relDest, stream, callback) {
     // TODO: Remove the tests anchored at dest
     callback(err);
   }
+  if ( !dest || dest === './' || dest === '.' ) {
+    throw new Error( 'Invalid path to test: "' + dest + '"' );
+  }
+
   shell.rm('-rf', dest);
   var err = shell.error();
   if(!err) {
