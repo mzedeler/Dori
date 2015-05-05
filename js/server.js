@@ -10,10 +10,13 @@ var express = require('express'),
     Tests = require('./tests.js');
 
 var Constructor = function(path, uploadKey) {
-
   var mount = '/tests';
-  if ( !path || path === '.' || path === './'  ) {
-    throw new Error( 'Invalid path: ' + path );
+
+  var cwd = fs.realpathSync( process.cwd() );
+  path = fs.realpathSync( path || cwd + mount );
+
+  if ( cwd.substr( 0, path.length ) === path ) {
+    throw new Error( 'Error: Path "' + path + '" is a parent path of cwd "' + cwd + '"' );
   }
 
   var tests = new Tests(path, mount);
@@ -49,7 +52,7 @@ var Constructor = function(path, uploadKey) {
         res.status(401).send("Uploading disabled\r\n");
         return;
       }
-      
+
       var urlPath = normalize(req.path);
       if(urlPath.match(/\.\./) || urlPath.match(/[^[:alnum:]\/]/)) {
         next();
@@ -65,7 +68,7 @@ var Constructor = function(path, uploadKey) {
       });
     }
   });
-  
+
   return app;
 };
 
