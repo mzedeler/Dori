@@ -1,6 +1,7 @@
 'use strict';
 
 var spawn = require('child_process').spawn,
+    pathResolve = require('path').resolve,
     dirname = require('path').dirname,
     glob = require('glob'),
     ensureDir = require('fs-extra').ensureDir,
@@ -76,8 +77,7 @@ Constructor.prototype.parseManifest = function(manifestPath, callback) {
 };
 
 Constructor.prototype.extract = function(relDest, stream, callback) {
-  var join = require('path').join;
-  var dest = fs.realpathSync( join(this.path, relDest) );
+  var dest = pathResolve( join(this.path, relDest) );
   var tests = this;
   var cleanupStack = [];
   function errorHandler(err) {
@@ -88,7 +88,7 @@ Constructor.prototype.extract = function(relDest, stream, callback) {
     callback(err);
   }
 
-  var cwd = fs.realpathSync( process.cwd( ) );
+  var cwd = pathResolve( process.cwd( ) );
   if ( cwd.substr( 0, dest.length ) === dest ) {
     throw new Error( 'Error: Dest: "' + dest + '" is a parent path of cwd "' + cwd + '"' );
   }

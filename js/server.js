@@ -3,6 +3,7 @@
 //TODO: Use https://www.npmjs.org/package/shelljs-nodecli
 
 var express = require('express'),
+    pathResolve = require('path').resolve,
     fs = require('fs'),
     sprintf = require('sprintf').sprintf,
     normalize = require('path').normalize,
@@ -12,8 +13,8 @@ var express = require('express'),
 var Constructor = function(path, uploadKey) {
   var mount = '/tests';
 
-  var cwd = fs.realpathSync( process.cwd() );
-  path = fs.realpathSync( path || cwd + mount );
+  var cwd = pathResolve( process.cwd() );
+  path = pathResolve( path || cwd + mount );
 
   if ( cwd.substr( 0, path.length ) === path ) {
     throw new Error( 'Error: Path "' + path + '" is a parent path of cwd "' + cwd + '"' );
