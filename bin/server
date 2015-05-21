@@ -2,7 +2,7 @@
 
 var options = require('minimist')(process.argv.slice(2));
 
-var server = require('../js/server.js')(options.path || '.', options.key, options.debug);
+var server = require('../js/server.js')(options.path || 'tests', options.key, options.debug);
 
 if(!options.key) {
   console.warn('No uploadKey provided. Uploading tests will be disabled.');

@@ -1,6 +1,7 @@
 'use strict';
 
 var spawn = require('child_process').spawn,
+    pathResolve = require('path').resolve,
     dirname = require('path').dirname,
     glob = require('glob'),
     ensureDir = require('fs-extra').ensureDir,
@@ -39,9 +40,10 @@ Constructor.prototype.parseManifest = function(manifestPath, callback) {
     callback('Unable to parse manifest: ' + e, '', '');
     return;
   }
+
+  var workDir = dirname(manifestPath);
   if(manifest.tests) {
     var baseUrl = dirname(manifestPath).substr(self.path.length);
-    var workDir = dirname(manifestPath);
     manifest.tests.forEach(function(test) {
       if(test.command) {
         self._index.tests[self.mount.concat(baseUrl, '/', test.name)] = {};
@@ -61,19 +63,21 @@ Constructor.prototype.parseManifest = function(manifestPath, callback) {
       }
     });
   }
+
   if(manifest.install) {
     execFile(
       manifest.install.command,
       manifest.install.args,
-      {},
+      {
+        cwd: workDir
+      },
       callback
     );
   }
 };
 
 Constructor.prototype.extract = function(relDest, stream, callback) {
-  var join = require('path').join;
-  var dest = join(this.path, relDest);
+  var dest = pathResolve( join(this.path, relDest) );
   var tests = this;
   var cleanupStack = [];
   function errorHandler(err) {
@@ -83,6 +87,12 @@ Constructor.prototype.extract = function(relDest, stream, callback) {
     // TODO: Remove the tests anchored at dest
     callback(err);
   }
+
+  var cwd = pathResolve( process.cwd( ) );
+  if ( cwd.indexOf( dest ) === 0 ) {
+    throw new Error( 'Error: Dest: "' + dest + '" is a parent path of cwd "' + cwd + '"' );
+  }
+
   shell.rm('-rf', dest);
   var err = shell.error();
   if(!err) {

@@ -3,6 +3,7 @@
 //TODO: Use https://www.npmjs.org/package/shelljs-nodecli
 
 var express = require('express'),
+    pathResolve = require('path').resolve,
     fs = require('fs'),
     sprintf = require('sprintf').sprintf,
     normalize = require('path').normalize,
@@ -10,12 +11,19 @@ var express = require('express'),
     Tests = require('./tests.js');
 
 var Constructor = function(path, uploadKey) {
-
   var mount = '/tests';
+
+  var cwd = pathResolve( process.cwd() );
+  path = pathResolve( path || cwd + mount );
+
+  if ( cwd.indexOf( path ) === 0 ) {
+    throw new Error( 'Error: Path "' + path + '" is a parent path of cwd "' + cwd + '"' );
+  }
+
   var tests = new Tests(path, mount);
   var matches = normalize(path || '.').match('(.*)/?');
   path = matches[1];
-  
+
   var app = express();
   app.use(mount, function(req, res, next) {
     if(req.method === 'GET') {
@@ -35,7 +43,7 @@ var Constructor = function(path, uploadKey) {
         }
       }
     } else if(req.method === 'POST') {
-      
+
       if(uploadKey) {
         if(req.param('key') !== uploadKey) {
           res.status(401).send("Wrong upload key provided\r\n");
@@ -45,7 +53,7 @@ var Constructor = function(path, uploadKey) {
         res.status(401).send("Uploading disabled\r\n");
         return;
       }
-      
+
       var urlPath = normalize(req.path);
       if(urlPath.match(/\.\./) || urlPath.match(/[^[:alnum:]\/]/)) {
         next();
@@ -61,7 +69,7 @@ var Constructor = function(path, uploadKey) {
       });
     }
   });
-  
+
   return app;
 };
 
