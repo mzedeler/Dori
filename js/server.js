@@ -16,7 +16,7 @@ var Constructor = function(path, uploadKey) {
   var cwd = pathResolve( process.cwd() );
   path = pathResolve( path || cwd + mount );
 
-  if ( cwd.substr( 0, path.length ) === path ) {
+  if ( cwd.indexOf( path ) === 0 ) {
     throw new Error( 'Error: Path "' + path + '" is a parent path of cwd "' + cwd + '"' );
   }
 

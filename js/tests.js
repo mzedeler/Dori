@@ -89,7 +89,7 @@ Constructor.prototype.extract = function(relDest, stream, callback) {
   }
 
   var cwd = pathResolve( process.cwd( ) );
-  if ( cwd.substr( 0, dest.length ) === dest ) {
+  if ( cwd.indexOf( dest ) === 0 ) {
     throw new Error( 'Error: Dest: "' + dest + '" is a parent path of cwd "' + cwd + '"' );
   }
 
