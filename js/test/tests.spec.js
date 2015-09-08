@@ -19,11 +19,13 @@ describe('Initialization', function() {
 describe('Configuring and running tests', function() {
   var tests = new Tests('fixtures', '/tests');
   it('Should be possible to add directory with tests', function() {
-    ['/tests/somedir1/ok.simpletest.js',
-     '/tests/somedir1/error.simpletest.js',
-     '/tests/somedir1/somedir2/ok.simpletest.js'].forEach(function(url) {
-       assert(tests.index().tests[url], 'The url ' + url + ' must be present in the test list');
-     });
+    [
+      '/tests/somedir1/ok.simpletest.js',
+      '/tests/somedir1/error.simpletest.js',
+      '/tests/somedir1/somedir2/ok.simpletest.js'
+    ].forEach(function(url) {
+      assert(tests.index().tests[url], 'The url ' + url + ' must be present in the test list');
+    });
     assert.equal(Object.keys(tests.index().tests).length, 3, 'Just three test scripts');
   });
 
@@ -62,7 +64,7 @@ describe('Configuring and running tests', function() {
     });
 
   });
-  
+
   it('Handles errors returned by install command specified', function(done) {
     var archive = require('../archive.js');
 
@@ -75,7 +77,7 @@ describe('Configuring and running tests', function() {
       });
     });
   });
-  
+
   it('Handles errors when trying to remove directories gracefully', function(done) {
     var sinon = require('sinon'),
         shell = require('shelljs'),

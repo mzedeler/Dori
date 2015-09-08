@@ -50,7 +50,7 @@ describe('Serving', function() {
         });
     });
   });
-  
+
   describe('Running tests', function() {
     it('Runs an ok test and returns status code 200', function(done) {
       var app = new Server('fixtures');
@@ -78,7 +78,7 @@ describe('Serving', function() {
   describe('Installing tests', function() {
     it('Is possible to upload a test package');
   });
-  
+
   describe('Error handling', function() {
     it('Returns status 404 for non-existing tests', function(done) {
       var app = new Server('fixtures');
@@ -96,5 +96,5 @@ describe('Serving', function() {
     it('Returns status 500 if an invalid test package is uploaded');
     it('Returns status 500 if a test package with a test manifest that contains errors');
   });
-  
+
 });

@@ -3,27 +3,31 @@
 /* global after */
 
 var tmp = require('tmp'),
-    rm = require('shelljs').rm,
-    cp = require('shelljs').cp,
+    shelljs = require('shelljs'),
+    rm = shelljs.rm,
+    cp = shelljs.cp,
     Server = require('../server.js'),
     Tests = require('../tests.js');
 
-var tmpDirs = [];
-
-after(function() {
-  tmpDirs.forEach(function(dir) {
-    rm('-r', dir);
-  });
-});
+function cleanUp(dir) {
+  rm('-r', dir);
+}
 
 function tmpIfy(callback) {
   tmp.dir(
-    { unsafeCleanup: true },
+    {
+      unsafeCleanup: true,
+    },
     function(err, dir) {
-      if(!err) {
-        tmpDirs.push(dir);
+      if (!err) {
+        after(function() {
+          cleanUp(dir);
+        });
+
         cp('-r', 'fixtures', dir);
         callback(dir);
+      } else {
+        throw err;
       }
     }
   );

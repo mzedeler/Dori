@@ -9,14 +9,18 @@ var http = require('http'),
     archive = require('./archive.js');
 
 module.exports = function(path, serverUrl, key, callback) {
-    var options = url.parse(serverUrl + '?' + querystring.stringify({key: key}));
+    var options = url.parse(serverUrl + '?' + querystring.stringify({
+      key: key
+    }));
     options.method = 'POST';
     options.headers = {
       'Content-Type': 'application/octet-stream'
     };
     var req = http.request(options, function(response) {
       var body = '';
-      response.on('data', function(chunk) { body += chunk; });
+      response.on('data', function(chunk) {
+        body += chunk;
+      });
       response.on('end', function() {
         var error;
         if(response.statusCode !== 200) {
