@@ -9,9 +9,14 @@ var tmp = require('tmp'),
     Server = require('../server.js'),
     Tests = require('../tests.js');
 
-function cleanUp(dir) {
-  rm('-r', dir);
-}
+var tmpDirs = [];
+
+after(function() {
+  tmpDirs.forEach(function(dir) {
+    rm('-r', dir);
+  });
+});
+
 
 function tmpIfy(callback) {
   tmp.dir(
@@ -20,9 +25,7 @@ function tmpIfy(callback) {
     },
     function(err, dir) {
       if (!err) {
-        after(function() {
-          cleanUp(dir);
-        });
+        tmpDirs.push(dir);
 
         cp('-r', 'fixtures', dir);
         callback(dir);
