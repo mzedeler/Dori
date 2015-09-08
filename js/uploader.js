@@ -9,9 +9,7 @@ var http = require('http'),
     archive = require('./archive.js');
 
 module.exports = function(path, serverUrl, key, callback) {
-    var options = url.parse(serverUrl + '?' + querystring.stringify({
-      key: key
-    }));
+    var options = url.parse(serverUrl + '?' + querystring.stringify({key: key}));
     options.method = 'POST';
     options.headers = {
       'Content-Type': 'application/octet-stream'
