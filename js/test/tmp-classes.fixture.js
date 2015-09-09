@@ -3,8 +3,9 @@
 /* global after */
 
 var tmp = require('tmp'),
-    rm = require('shelljs').rm,
-    cp = require('shelljs').cp,
+    shelljs = require('shelljs'),
+    rm = shelljs.rm,
+    cp = shelljs.cp,
     Server = require('../server.js'),
     Tests = require('../tests.js');
 
@@ -16,14 +17,20 @@ after(function() {
   });
 });
 
+
 function tmpIfy(callback) {
   tmp.dir(
-    { unsafeCleanup: true },
+    {
+      unsafeCleanup: true,
+    },
     function(err, dir) {
-      if(!err) {
+      if (!err) {
         tmpDirs.push(dir);
+
         cp('-r', 'fixtures', dir);
         callback(dir);
+      } else {
+        throw err;
       }
     }
   );

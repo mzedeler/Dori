@@ -48,12 +48,20 @@ Constructor.prototype.parseManifest = function(manifestPath, callback) {
       if(test.command) {
         self._index.tests[self.mount.concat(baseUrl, '/', test.name)] = {};
         test.run = function(callback) {
-          var child = spawn(test.command, test.parameters, { cwd: workDir });
+          var child = spawn(test.command, test.parameters, {
+            cwd: workDir,
+          });
           var output = '';
           if(child) {
-            child.stdout.on('data', function(data) { output += data; });
-            child.stderr.on('data', function(data) { output += data; });
-            child.on('close', function(exitCode) { callback(exitCode, output); });
+            child.stdout.on('data', function(data) {
+              output += data;
+            });
+            child.stderr.on('data', function(data) {
+              output += data;
+            });
+            child.on('close', function(exitCode) {
+              callback(exitCode, output);
+            });
           } else {
             callback(1, 'Spawning test failed.');
           }
@@ -73,6 +81,8 @@ Constructor.prototype.parseManifest = function(manifestPath, callback) {
       },
       callback
     );
+  } else {
+    callback();
   }
 };
 
@@ -98,7 +108,9 @@ Constructor.prototype.extract = function(relDest, stream, callback) {
   if(!err) {
     ensureDir(dest, function(err) {
       if(!err) {
-        cleanupStack.push(function() { shell.rm('-rf', dest); });
+        cleanupStack.push(function() {
+          shell.rm('-rf', dest);
+        });
         if(Constructor.debug) {
           stream.pipe(fs.createWriteStream('/tmp/test.tar.gz'));
         }

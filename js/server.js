@@ -1,6 +1,6 @@
 'use strict';
 
-//TODO: Use https://www.npmjs.org/package/shelljs-nodecli
+// TODO: Use https://www.npmjs.org/package/shelljs-nodecli
 
 var express = require('express'),
     pathResolve = require('path').resolve,
@@ -33,13 +33,14 @@ var Constructor = function(path, uploadKey) {
       } else {
         var test = tests.get(req.url);
         if(test) {
-          var data = test.run(function(exitCode, output) {
+          test.run(function(exitCode, output) {
             res.status(exitCode === 0 ? 200 : 525); // Custom error code for a failed test
             res.set('Content-Type', 'text/plain');
             res.send(output);
           });
         } else {
           next();
+          return;
         }
       }
     } else if(req.method === 'POST') {
@@ -57,6 +58,8 @@ var Constructor = function(path, uploadKey) {
       var urlPath = normalize(req.path);
       if(urlPath.match(/\.\./) || urlPath.match(/[^[:alnum:]\/]/)) {
         next();
+
+        return;
       }
 
       tests.extract(urlPath, req, function(err) {

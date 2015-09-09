@@ -16,7 +16,9 @@ module.exports = function(path, serverUrl, key, callback) {
     };
     var req = http.request(options, function(response) {
       var body = '';
-      response.on('data', function(chunk) { body += chunk; });
+      response.on('data', function(chunk) {
+        body += chunk;
+      });
       response.on('end', function() {
         var error;
         if(response.statusCode !== 200) {
