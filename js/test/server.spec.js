@@ -40,11 +40,12 @@ describe('Serving', function() {
           assert.sameMembers(
             [
               '/tests/somedir1/ok.simpletest.js',
+              '/tests/somedir1/fail.simpletest.js',
               '/tests/somedir1/error.simpletest.js',
               '/tests/somedir1/somedir2/ok.simpletest.js'
             ],
             Object.keys(res.body.tests),
-            'Just three specific test scripts'
+            'Just four specific test scripts'
           );
           done();
         });
@@ -61,8 +62,14 @@ describe('Serving', function() {
     it('Runs a failing test and returns status code 525', function(done) {
       var app = new Server('fixtures');
       request(app)
-        .get('/tests/somedir1/error.simpletest.js')
+        .get('/tests/somedir1/fail.simpletest.js')
         .expect(525, done);
+    });
+    it('Runs a test that encounters an error and returns status code 500', function(done) {
+      var app = new Server('fixtures');
+      request(app)
+        .get('/tests/somedir1/error.simpletest.js')
+        .expect(500, done);
     });
     it('Returns output written to stdout and stderr', function(done) {
       var app = new Server('fixtures');

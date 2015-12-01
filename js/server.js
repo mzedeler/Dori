@@ -34,7 +34,11 @@ var Constructor = function(path, uploadKey) {
         var test = tests.get(req.url);
         if(test) {
           test.run(function(exitCode, output) {
-            res.status(exitCode === 0 ? 200 : 525); // Custom error code for a failed test
+            switch(exitCode) {
+              case 0:  res.status(200); break;
+              case 1:  res.status(525); break;
+              default: res.status(500);
+            }
             res.set('Content-Type', 'text/plain');
             res.send(output);
           });

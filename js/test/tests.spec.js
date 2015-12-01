@@ -21,12 +21,13 @@ describe('Configuring and running tests', function() {
   it('Should be possible to add directory with tests', function() {
     [
       '/tests/somedir1/ok.simpletest.js',
+      '/tests/somedir1/fail.simpletest.js',
       '/tests/somedir1/error.simpletest.js',
       '/tests/somedir1/somedir2/ok.simpletest.js'
     ].forEach(function(url) {
       assert(tests.index().tests[url], 'The url ' + url + ' must be present in the test list');
     });
-    assert.equal(Object.keys(tests.index().tests).length, 3, 'Just three test scripts');
+    assert.equal(Object.keys(tests.index().tests).length, 4, 'Just four test scripts');
   });
 
   it('Should be possible to run an ok test', function(done) {
@@ -37,6 +38,16 @@ describe('Configuring and running tests', function() {
       assert.equal(exitCode, 0, 'Ok test exited with exit code 0');
       assert.match(output, /writing to stdout/, 'Ok test wrote to stdout');
       assert.match(output, /writing to stderr/, 'Ok test wrote to stderr');
+      done();
+    });
+  });
+
+  it('Should be possible to run a failing test', function(done) {
+    var ok_test = tests.get('/somedir1/fail.simpletest.js');
+    assert(ok_test, 'Failing test exists.');
+    assert.equal(ok_test.name, 'fail.simpletest.js', 'Failing test has right name.');
+    ok_test.run(function(exitCode, output) {
+      assert.notEqual(exitCode, 0, 'Failing test exited with nonzero exit code');
       done();
     });
   });
