@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dori - health probing made easy</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Dori
+
+System health probing made easy
+
+---
+
+# Agenda
+
+1. Health probing
+2. Probe example using ping
+3. Dori server
+3. Custom probes
+4. Summary
+
+---
+
+# Health probing
+
+Dori lets you monitor the health of a system in non-trivial ways.
+
+If it is scriptable then Dori can monitor it.
+
+For instance:
+
+ * Checking if a database contains the data you expected.
+ * Run a Cucumber test of a web site.
+ * Run a JUnit/NUnit test.
+ * See if the latest Jenkins build is ok.
+
+A Dori probe is just an executable that runs a test of some system to be monitored:
+
+ * If the test is ok, the probe returns 0.
+ * If the test is not ok, the probe returns 1.
+ * Anything else means that the probe itself failed.
+
+Dori provides a way to integrate custom probes written by you.
+
+---
+
+## Example: probe returning ok
+
+```bash
+$ ping -c 1 dr.dk
+PING dr.dk (159.20.6.38) 56(84) bytes of data.
+
+--- dr.dk ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 5.106/5.106/5.106/0.000 ms
+$ echo Return code: $?
+Return code: 0
+```
+
+---
+
+## Example: probe failed
+
+```bash
+$ ping -c 1 dr.dk
+PING dr.dk (159.20.6.38) 56(84) bytes of data.
+
+--- dr.dk ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
+$ echo Return code: $?
+Return code: 1
+```
+
+---
+
+## Example: probe error
+
+```bash
+$ ping -c 1 d.rdk
+ping: unknown host d.rdk
+$ echo Return code: $?
+Return code: 2
+```
+
+---
+
+# Dori server
+
+The Dori server exposes a number of probes through http.
+
+ * It lists the number of available tests.
+ * Has a nifty upload facility.
+ * It runs tests and maps to the follwing HTTP responses:
+   * `200 OK` if the test is ok
+   * `525 Failed` if the test fails
+   * `500 Error` if the test encounters an error when running
+   * `404 Not found` if Dori doesn't have the test
+
+---
+
+## Starting the server
+
+The Dori server is just a http server that will run tests when requested to do so.
+
+Run it like this:
+
+```bash
+bin/server --port 8080 --key <some key>
+```
+
+Leave the server running for the next slides.
+
+Parameters:
+ * `port`: what port to listen to (defaults to 80).
+ * `key`: upload key to use (should be kept secret).
+ * `path`: where to keep the uploaded tests.
+ * `debug`: print debug to stdout or stderr when running.
+
+---
+
+## Uploading tests: manifest
+
+Create a file named `test.manifest` in an empty directory. For example:
+
+```json
+{
+  "tests": [
+    {
+      "name": "ok",
+      "command": "ping",
+      "parameters": ["-c", "1", "dr.dk"]
+    },
+    {
+      "name": "fail",
+      "command": "ping",
+      "parameters": ["-c", "1", "192.168.254.0"]
+    },
+    {
+      "name": "error",
+      "command": "ping",
+      "parameters": ["-c", "1", "d.rdk"]
+    }
+  ]
+}
+```
+---
+
+## Uploading tests: uploader
+
+Point the upload tool at the directory with `test.manifest`, and run it:
+
+```bash
+$ uploader --url http://localhost:8080/tests/ping --key <some key> --tests .
+```
+
+Parameters:
+ * `url`: the url where the tests to upload should be exposed (a Dori server must run here).
+ * `key`: an upload key for authorization.
+ * `tests`: the directory containing `test.manifest`.
+
+---
+
+## Listing the tests
+
+```bash
+$ curl http://localhost:8080/tests/
+{
+  "tests": {
+    "/tests/ping/ok": {},
+    "/tests/ping/fail": {},
+    "/tests/ping/error": {}
+  },
+  "errors": {}
+}
+```
+
+---
+
+### Running a test: ping ok
+
+```bash
+$ curl -i http://localhost:8080/tests/ping/ok
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Content-Length: 247
+
+PING dr.dk (159.20.6.38) 56(84) bytes of data.
+64 bytes from 159.20.6.38: icmp_seq=1 ttl=250 time=3.02 ms
+
+--- dr.dk ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 3.020/3.020/3.020/0.000 ms
+```
+
+---
+
+### Running a test: ping fail
+
+```bash
+$ curl -i http://localhost:8080/tests/ping/fail
+HTTP/1.1 525 unknown
+Content-Type: text/plain; charset=utf-8
+Content-Length: 159
+
+PING 192.168.254.0 (192.168.254.0) 56(84) bytes of data.
+
+--- 192.168.254.0 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+```
+
+---
+
+### Running a test: ping error
+
+```bash
+$ curl -i http://localhost:8080/tests/ping/error
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/plain; charset=utf-8
+Content-Length: 25
+
+ping: unknown host d.rdk
+```
+
+---
+
+# Custom probes
+
+The upload tool is able to upload and install custom test scripts and other executables.
+
+ * Everything in the same directory as `test.manifest` is uploaded.
+ * Installation can be done by adding an `install` property to `test.manifest`.
+
+```bash
+$ ls -1 http/
+http.js       # Our custom test
+test.manifest # The manifest file
+```
+
+---
+
+## http.js
+
+```javascript
+'use strict';
+
+var http = require('http');
+
+var req = http.request(process.argv[2], function(res) {
+  console.log(res.statusCode);
+  res.on('data', function(chunk) {
+    console.log(chunk.toString());
+  });
+  res.on('end', function() {
+    process.exit(res.statusCode < 400 ? 0 : 1);
+  });
+});
+
+req.on('error', function(e) {
+  console.log(e);
+  process.exit(2);
+});
+
+req.end();
+```
+
+---
+
+## test.manifest
+
+```javascript
+{
+  "tests": [
+    {
+      "name": "ok",
+      "command": "node",
+      "parameters": ["http.js", "http://www.google.com"]
+    },
+    {
+      "name": "fail",
+      "command": "node",
+      "parameters": ["http.js", "http://www.google.com/thispagedoesntexist"]
+    },
+    {
+      "name": "error",
+      "command": "node",
+      "parameters": ["http.js", "http://www.googl.ecom"]
+    }
+  ]
+}
+```
+
+---
+
+### Running a test: http ok
+
+```bash
+$ curl -i http://localhost:8080/tests/http/ok            
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Content-Length: 263
+
+302
+<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
+<TITLE>302 Moved</TITLE></HEAD><BODY>
+<H1>302 Moved</H1>
+The document has moved
+<A HREF="http://www.google.dk/?gws_rd=cr&amp;ei=6NpuVoq7GIawsAG37a2wBg">here</A>.
+</BODY></HTML>
+```
+
+---
+
+### Running a test: http fail
+
+```bash
+$ curl -i http://localhost:8080/tests/http/error
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/plain; charset=utf-8
+Content-Length: 97
+
+{ [Error: getaddrinfo ENOTFOUND] code: 'ENOTFOUND', errno: 'ENOTFOUND', syscall: 'getaddrinfo' }
+```
+
+---
+
+### Running a test: http error
+
+```bash
+$ curl -i http://localhost:8080/tests/http/fail
+HTTP/1.1 525 unknown
+Content-Type: text/plain; charset=utf-8
+Content-Length: 1586
+
+404
+<!DOCTYPE html>
+<html lang=en>
+  <meta charset=utf-8>
+  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
+  <title>Error 404 (Not Found)!!1</title>
+[...]
+```
+
+---
+
+# Summary
+
+ * Dori is a test execution server with an upload tool
+ * Tests are described using JSON in `test.manifest`
+ * The server can list what tests it supports
+ * A test call to Dori has four possible execution results:
+   * Ok
+   * Failed
+   * Internal error
+   * Not found
+ * Download it from http://github.com/Notalib/Dori
+
+    </textarea>
+    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create({
+          highlightStyle: 'monokai',
+          highlightLanguage: 'remark',
+          highlightLines: true
+        });
+    </script>
+  </body>
+</html>

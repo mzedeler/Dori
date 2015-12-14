@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "name": "ok",
+      "command": "node",
+      "parameters": ["http.js", "http://www.google.com"]
+    },
+    {
+      "name": "fail",
+      "command": "node",
+      "parameters": ["http.js", "http://www.google.com/thispagedoesntexist"]
+    },
+    {
+      "name": "error",
+      "command": "node",
+      "parameters": ["http.js", "http://www.googl.ecom"]
+    }
+  ]
+}
+

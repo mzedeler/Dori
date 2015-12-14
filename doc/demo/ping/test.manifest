@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "name": "ok",
+      "command": "ping",
+      "parameters": ["-c", "1", "dr.dk"]
+    },
+    {
+      "name": "fail",
+      "command": "ping",
+      "parameters": ["-c", "1", "192.168.254.0"]
+    },
+    {
+      "name": "error",
+      "command": "ping",
+      "parameters": ["-c", "1", "d.rdk"]
+    }
+  ]
+}
+
